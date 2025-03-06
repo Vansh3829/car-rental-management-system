@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 # Database connection
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost", user="root", password="vanshsingh@2005", database="car_rental_db"
+        host="localhost", user="root", password="____________", database="car_rental_db"
     )
 
 # Ensure tables exist
