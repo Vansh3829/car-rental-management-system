@@ -6,8 +6,38 @@ import matplotlib.pyplot as plt
 # Database connection
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost", user="root", password="___________", database="car_rental_db"
+        host="localhost", user="root", password="vanshsingh@2005", database="car_rental_db"
     )
+
+# Ensure tables exist
+def create_tables():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Cars (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        model VARCHAR(100) NOT NULL,
+        brand VARCHAR(100),
+        year INT,
+        availability BOOLEAN DEFAULT TRUE
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Rentals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        car_id INT,
+        rental_date DATE,
+        FOREIGN KEY (car_id) REFERENCES Cars(id)
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+# Call the function to ensure tables are created
+create_tables()
 
 # Function to execute queries
 def execute_query(query, params=None, fetch=False):
@@ -37,7 +67,7 @@ if choice == "Manage Cars":
         year = st.number_input("Year", min_value=1990, max_value=2030, step=1)
         status = st.selectbox("Availability", ["Available", "Rented"])
         if st.button("Add Car"):
-            execute_query("INSERT INTO Cars (brand, model, year, status) VALUES (%s, %s, %s, %s)",
+            execute_query("INSERT INTO Cars (brand, model, year, availability) VALUES (%s, %s, %s, %s)",
                           (brand, model, year, status))
             st.success("Car added successfully!")
     
@@ -78,11 +108,11 @@ elif choice == "Manage Rentals":
         rental_id = st.number_input("Rental ID", min_value=1, step=1)
         if st.button("Return Car"):
             execute_query("DELETE FROM Rentals WHERE id=%s", (rental_id,))
-            execute_query("UPDATE Cars SET status='Available' WHERE id=(SELECT car_id FROM Rentals WHERE id=%s)", (rental_id,))
+            execute_query("UPDATE Cars SET availability=True WHERE id=(SELECT car_id FROM Rentals WHERE id=%s)", (rental_id,))
             st.success("Car returned successfully!")
     
     elif action == "View Available Cars":
-        available_cars = execute_query("SELECT * FROM Cars WHERE status='Available'", fetch=True)
+        available_cars = execute_query("SELECT * FROM Cars WHERE availability=True", fetch=True)
         df = pd.DataFrame(available_cars, columns=["ID", "Brand", "Model", "Year", "Status"])
         st.dataframe(df)
 
@@ -109,5 +139,3 @@ elif choice == "View Insights":
     plt.title("Monthly Rental Trends")
     plt.xticks(range(1, 13), ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
     st.pyplot(fig2)
-
-
